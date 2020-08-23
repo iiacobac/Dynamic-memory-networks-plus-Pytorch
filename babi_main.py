@@ -20,7 +20,7 @@ def position_encoding(embedded_sentence):
     l = l.unsqueeze(0) # for #batch
     l = l.unsqueeze(1) # for #sen
     l = l.expand_as(embedded_sentence)
-    weighted = embedded_sentence * Variable(l.cuda())
+    weighted = embedded_sentence * Variable(l) # .cuda())
     return torch.sum(weighted, dim=2).squeeze(2) # sum with tokens
 
 class AttentionGRUCell(nn.Module):
@@ -66,7 +66,7 @@ class AttentionGRU(nn.Module):
         C.size() -> (#batch, #hidden)
         '''
         batch_num, sen_num, embedding_size = facts.size()
-        C = Variable(torch.zeros(self.hidden_size)).cuda()
+        C = Variable(torch.zeros(self.hidden_size)) #.cuda()
         for sid in range(sen_num):
             fact = facts[:, sid, :]
             g = G[:, sid]
@@ -172,7 +172,7 @@ class InputModule(nn.Module):
         contexts = position_encoding(contexts)
         contexts = self.dropout(contexts)
 
-        h0 = Variable(torch.zeros(2, batch_num, self.hidden_size).cuda())
+        h0 = Variable(torch.zeros(2, batch_num, self.hidden_size)) # .cuda())
         facts, hdn = self.gru(contexts, h0)
         facts = facts[:, :, :hidden_size] + facts[:, :, hidden_size:]
         return facts
@@ -195,7 +195,7 @@ class DMNPlus(nn.Module):
         super(DMNPlus, self).__init__()
         self.num_hop = num_hop
         self.qa = qa
-        self.word_embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=0, sparse=True).cuda()
+        self.word_embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=0, sparse=True) #.cuda()
         init.uniform(self.word_embedding.state_dict()['weight'], a=-(3**0.5), b=3**0.5)
         self.criterion = nn.CrossEntropyLoss(size_average=False)
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
             hidden_size = 80
 
             model = DMNPlus(hidden_size, vocab_size, num_hop=3, qa=dset.QA)
-            model.cuda()
+            model #.cuda()
             early_stopping_cnt = 0
             early_stopping_flag = False
             best_acc = 0
@@ -276,9 +276,9 @@ if __name__ == '__main__':
                         optim.zero_grad()
                         contexts, questions, answers = data
                         batch_size = contexts.size()[0]
-                        contexts = Variable(contexts.long().cuda())
-                        questions = Variable(questions.long().cuda())
-                        answers = Variable(answers.cuda())
+                        contexts = Variable(contexts.long()) #.cuda())
+                        questions = Variable(questions.long()) #.cuda())
+                        answers = Variable(answers) #.cuda())
 
                         loss, acc = model.get_loss(contexts, questions, answers)
                         loss.backward()
@@ -286,7 +286,8 @@ if __name__ == '__main__':
                         cnt += batch_size
 
                         if batch_idx % 20 == 0:
-                            print(f'[Task {task_id}, Epoch {epoch}] [Training] loss : {loss.data[0]: {10}.{8}}, acc : {total_acc / cnt: {5}.{4}}, batch_idx : {batch_idx}')
+#                            import pdb; pdb.set_trace()
+                            print(f'[Task {task_id}, Epoch {epoch}] [Training] loss : {loss.data.item(): {10}.{8}}, acc : {total_acc / cnt: {5}.{4}}, batch_idx : {batch_idx}')
                         optim.step()
 
                     dset.set_mode('valid')
@@ -300,9 +301,9 @@ if __name__ == '__main__':
                     for batch_idx, data in enumerate(valid_loader):
                         contexts, questions, answers = data
                         batch_size = contexts.size()[0]
-                        contexts = Variable(contexts.long().cuda())
-                        questions = Variable(questions.long().cuda())
-                        answers = Variable(answers.cuda())
+                        contexts = Variable(contexts.long()) #.cuda())
+                        questions = Variable(questions.long()) #.cuda())
+                        answers = Variable(answers) #.cuda())
 
                         _, acc = model.get_loss(contexts, questions, answers)
                         total_acc += acc * batch_size
@@ -337,9 +338,9 @@ if __name__ == '__main__':
             for batch_idx, data in enumerate(test_loader):
                 contexts, questions, answers = data
                 batch_size = contexts.size()[0]
-                contexts = Variable(contexts.long().cuda())
-                questions = Variable(questions.long().cuda())
-                answers = Variable(answers.cuda())
+                contexts = Variable(contexts.long()) #.cuda())
+                questions = Variable(questions.long()) #.cuda())
+                answers = Variable(answers) #.cuda())
 
                 model.load_state_dict(best_state)
                 _, acc = model.get_loss(contexts, questions, answers)
