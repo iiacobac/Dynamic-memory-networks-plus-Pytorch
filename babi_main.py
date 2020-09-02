@@ -20,7 +20,7 @@ def position_encoding(embedded_sentence):
     l = l.unsqueeze(0) # for #batch
     l = l.unsqueeze(1) # for #sen
     l = l.expand_as(embedded_sentence)
-    weighted = embedded_sentence * Variable(l) # .cuda())
+    weighted = embedded_sentence * Variable(l.cuda())
     return torch.sum(weighted, dim=2).squeeze(2) # sum with tokens
 
 class AttentionGRUCell(nn.Module):
@@ -66,7 +66,7 @@ class AttentionGRU(nn.Module):
         C.size() -> (#batch, #hidden)
         '''
         batch_num, sen_num, embedding_size = facts.size()
-        C = Variable(torch.zeros(self.hidden_size)) #.cuda()
+        C = Variable(torch.zeros(self.hidden_size)).cuda()
         for sid in range(sen_num):
             fact = facts[:, sid, :]
             g = G[:, sid]
@@ -172,7 +172,7 @@ class InputModule(nn.Module):
         contexts = position_encoding(contexts)
         contexts = self.dropout(contexts)
 
-        h0 = Variable(torch.zeros(2, batch_num, self.hidden_size)) # .cuda())
+        h0 = Variable(torch.zeros(2, batch_num, self.hidden_size).cuda())
         facts, hdn = self.gru(contexts, h0)
         facts = facts[:, :, :hidden_size] + facts[:, :, hidden_size:]
         return facts
@@ -195,7 +195,7 @@ class DMNPlus(nn.Module):
         super(DMNPlus, self).__init__()
         self.num_hop = num_hop
         self.qa = qa
-        self.word_embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=0, sparse=True) #.cuda()
+        self.word_embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=0, sparse=True).cuda()
         init.uniform(self.word_embedding.state_dict()['weight'], a=-(3**0.5), b=3**0.5)
         self.criterion = nn.CrossEntropyLoss(size_average=False)
 
